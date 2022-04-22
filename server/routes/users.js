@@ -1,57 +1,45 @@
 const router = require('express').Router();
 const bcrypt = require('bcrypt');
 const connection = require('../config/connection');
+const userModel = require("../models/users");
 
 //-------------------------------------------
 
 //Get user information
-router.get('/:username', (req, res) => {
-    const { username } = req.params;
-    let sql = 'SELECT * FROM users where username = ?';
-    connection.query(sql, [username], (err, rows, fields) => {
-        if (err) throw err;
+router.get('/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const result = await userModel.getUser(username);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+});
 
-        if (rows.length > 0) {
-            res.json({ exists: true, data: rows });
-        } else {
-            res.json({ exists: false })
-        }
-    })
+//Get user rank
+router.get('/getRank/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const result = await userModel.getRank(username);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
 });
 
 //Add new user
 router.post('/newUser', async (req, res) => {
-    const user = req.body;
-
-    const hashedPassword = await bcrypt.hash(user.password, 10);
-    const search_query = 'SELECT * FROM users WHERE username = ?';
-    const insert_query = 'INSERT INTO users VALUES (?,?,?,?,?,?,?,?)';
-
-    const date = new Date();
-    let actualDate = date.getFullYear() + "-" + date.getMonth() + "-" + date.getDay();
-
-    await connection.query(search_query, user.username, async (err, rows, fields) => {
-        if (err) throw err;
-
-        if (rows.length > 0) {
-            res.sendStatus(409);
-        }
-        else {
-            await connection.query(insert_query, [
-                user.username,
-                hashedPassword,
-                user.firstname,
-                user.lastname,
-                user.email,
-                user.birth_date,
-                actualDate,
-                0
-            ], (err, result) => {
-                if (err) throw err;
-                res.sendStatus(201);
-            })
-        }
-    })
+    try {
+        const user = req.body;
+        const result = await userModel.createUser(user);
+        res.json(result);
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+    
 });
 
 router.put('/updateUser', async (req, res) => {
@@ -71,12 +59,12 @@ router.put('/updateUser', async (req, res) => {
         } else {
             if (result.affectedRows > 0) {
                 res.json({ success: true });
-            }else{
+            } else {
                 res.json({ success: false });
             }
         }
     })
-})
+});
 
 router.put('/addScore', async (req, res) => {
     const username = req.body.username;
@@ -98,12 +86,14 @@ router.put('/addScore', async (req, res) => {
         } else {
             if (result.affectedRows > 0) {
                 res.json({ success: true });
-            }else{
+            } else {
                 res.json({ success: false });
             }
         }
     })
-})
+});
+
+
 
 //-------------------------------------------
 
