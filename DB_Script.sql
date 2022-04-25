@@ -120,6 +120,15 @@ CREATE TABLE IF NOT EXISTS `juego_maya`.`user_medals` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- View `juego_maya`.`user_ranking`
+-- -----------------------------------------------------
+
+
+CREATE VIEW user_ranking AS 
+SELECT username, total_score, dense_rank() OVER(ORDER BY total_score DESC) AS 'ranking' 
+FROM users;
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
